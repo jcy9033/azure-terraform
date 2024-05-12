@@ -17,26 +17,43 @@ variable "name_prefix" {
   default = "learn"
 }
 
-variable "regions" {
+variable "resource_groups" {
   type = map(object({
     location : string
     instance_count : number
   }))
   default = {
-    "us-east"    = { location = "East US", instance_count = 2 },
-    "jp-east"    = { location = "Japan East", instance_count = 2 },
-    "ko-central" = { location = "Korea Central", instance_count = 2 }
-  }
-
-  validation {
-    condition     = alltrue([for _, region in var.regions : contains(["East US", "Japan East", "Korea Central"], region.location)])
-    error_message = "Each region's location must be 'East US', 'Japan East', or 'Korea Central'."
+    "us-east" = {
+      location       = "East US",
+      instance_count = 1
+    },
+    "jp-east" = {
+      location       = "Japan East",
+      instance_count = 1
+    },
+    "ko-central" = {
+      location       = "Korea Central",
+      instance_count = 1
+    }
   }
 }
 
+locals {
+  # 각 지역의 인스턴스 목록을 생성
+  instances = flatten([
+    for loc, specs in var.resource_groups : [
+      for index in range(specs.instance_count) : {
+        key      = "${loc}-${format("%03d", index + 1)}"
+        location = specs.location
+      }
+    ]
+  ])
+}
 
 resource "azurerm_resource_group" "rg" {
-  for_each = var.regions
-  name     = "${var.name_prefix}-rg-${each.key}"
+  # flatten으로 생성된 인스턴스 리스트에서 각 항목을 고유 키와 매핑
+  for_each = { for inst in local.instances : inst.key => inst }
+
+  name     = "${var.name_prefix}-rg-${each.value.key}"
   location = each.value.location
 }

@@ -1,3 +1,4 @@
+# Version
 provider "azurerm" {
   features {}
 }
@@ -11,6 +12,7 @@ terraform {
   }
 }
 
+# Variables
 variable "location" {
   type    = string
   default = "japaneast"
@@ -19,13 +21,13 @@ variable "location" {
 variable "resource_group_names" {
   type = list(string)
   default = [
-    "learn-rg-1",
-    "learn-rg-2"
+    "learn-rg-001",
+    "learn-rg-002",
+    "learn-rg-003"
   ]
 }
 
-
-
+# Resource Groups
 resource "azurerm_resource_group" "resource_groups" {
   count    = length(var.resource_group_names)
   location = var.location
